@@ -93,7 +93,32 @@ IF(UNIX)
     ADD_LIBRARY(RTIMULib SHARED ${LIBRTIMU_SRCS})
     SET_PROPERTY(TARGET RTIMULib PROPERTY VERSION ${RTIMULIB_VERSION})
     SET_PROPERTY(TARGET RTIMULib PROPERTY SOVERSION ${RTIMULIB_VERSION_MAJOR})
-    INSTALL(TARGETS RTIMULib DESTINATION lib)
-    INSTALL(DIRECTORY . DESTINATION include FILES_MATCHING PATTERN "*.h")
+
+    set (cmake_configfile_install lib/cmake) 
+    set (target_install_dest_name "${cmake_configfile_install}/RTIMULibTargets.cmake") #Name of the auto-generated cmake target
+
+    # export library (either static or shared depending on BUILD_SHARED_LIBS)
+    install(TARGETS RTIMULib
+	    EXPORT RTIMULibTargets
+	    LIBRARY DESTINATION lib
+	    ARCHIVE DESTINATION lib
+	    INCLUDES DESTINATION include/RTIMULib 
+        )
+
+    include (CMakePackageConfigHelpers)
+    configure_package_config_file(
+		    "${CMAKE_CURRENT_SOURCE_DIR}/rtimulib-config.cmake.in"					#Location of the file to configure
+		    "${CMAKE_CURRENT_BINARY_DIR}/cmake/rtimulib-config.cmake"		#Destination of the configured file
+		    INSTALL_DESTINATION "${cmake_configfile_install}	"							              #Final destination of the file (used to compute relative path)
+		    PATH_VARS target_install_dest_name                                    						      #Variable passed to the config algorithm into the configured file
+	    )
+
+    install (EXPORT RTIMULibTargets
+		    FILE RTIMULibTargets.cmake
+		    DESTINATION "${cmake_configfile_install}") #Install the RTIMULibTargets*.cmake files
+
+    install (FILES "${CMAKE_CURRENT_BINARY_DIR}/cmake/rtimulib-config.cmake" DESTINATION "${cmake_configfile_install}") 
+
+    INSTALL(DIRECTORY . DESTINATION include/RTIMULib FILES_MATCHING PATTERN "*.h")
 ENDIF(UNIX)
 
